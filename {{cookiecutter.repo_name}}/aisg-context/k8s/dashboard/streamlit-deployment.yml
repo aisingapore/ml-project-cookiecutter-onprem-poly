@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+{% if cookiecutter.gcr_personal_subdir == 'No' %}
+  name: streamlit-deployment
+{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
+  name: streamlit-{{cookiecutter.author_name.replace('_', '-')}}-deployment
+{% endif %}
+spec:
+{% if cookiecutter.gcr_personal_subdir == 'No' %}
+  selector:
+    matchLabels:
+      app: streamlit
+  template:
+    metadata:
+      labels:
+        app: streamlit
+{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
+  selector:
+    matchLabels:
+      app: streamlit-{{cookiecutter.author_name.replace('_', '-')}}
+  template:
+    metadata:
+      labels:
+        app: streamlit-{{cookiecutter.author_name.replace('_', '-')}}
+{% endif %}
+    spec:
+      containers:
+{% if cookiecutter.gcr_personal_subdir == 'No' %}
+        - image: asia.gcr.io/{{cookiecutter.gcp_project_id}}/streamlit:0.1.0
+{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
+        - image: asia.gcr.io/{{cookiecutter.gcp_project_id}}/{{cookiecutter.author_name}}/streamlit:0.1.0
+{% endif %}
+          imagePullPolicy: Always
+          name: streamlit
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "4"
+            limits:
+              memory: "4Gi"
+              cpu: "4"
+          ports:
+            - containerPort: 8501
+              name: streamlit
+          volumeMounts:
+            - name: streamlit-persistent-storage
+              mountPath: /home/aisg/from-gcs
+            - name: gcp-service-account
+              mountPath: /var/secret/cloud.google.com
+          env:
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/secret/cloud.google.com/gcp-service-account.json
+      imagePullSecrets:
+        - name: gcp-imagepullsecrets
+      volumes:
+        - name: streamlit-persistent-storage
+          persistentVolumeClaim:
+            claimName: fstore-rwx-pvc
+        - name: gcp-service-account
+          secret:
+            secretName: "gcp-sa-credentials"
