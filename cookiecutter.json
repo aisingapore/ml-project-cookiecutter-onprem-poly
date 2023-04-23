@@ -4,9 +4,9 @@
     "repo_name": "{{ cookiecutter.project_name.lower().replace(' ', '-').replace('_', '-') }}",
     "src_package_name": "{{ cookiecutter.repo_name.replace('-', '_') }}",
     "src_package_name_short": "{{ cookiecutter.src_package_name }}",
-    "gcp_project_id": "ID of your GCP project.",
-    "gcr_personal_subdir": ["Yes", "No"],
-    "author_name": "Your alias or project team's name. Underscore delimited if you're using personal GCR subdirectories.",
+    "ecs_s3_bucket_name": "ID of your S3 project.",
+    "harbor_registry_project_path": "Path of the project's container registry on Harbor.",
+    "author_name": "Your alias or project team's name.",
     "open_source_license": ["MIT", "BSD-3-Clause", "No license file"],
     "_copy_without_render": [
         "aisg-context/polyaxon/polyaxonfiles"
