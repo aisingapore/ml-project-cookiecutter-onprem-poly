@@ -1,9 +1,10 @@
 # Development Environment
 
-An advantage presented by the Polyaxon platform is that you can utilise
-the GKE cluster's resources for your development and engineering works
+An advantage presented by the Kubernetes platform is that you can
+utilise
+the RKE cluster's resources for your development and engineering works
 instead of your own resources. We can make use of
-[Polyaxon services](https://polyaxon.com/docs/experimentation/services/)
+[Kubernetes Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/")
 to spin up VSCode or JupyterLab servers with which cluster resources
 can be dedicated (except for GPUs);
 all you need on your end is a machine with WebSockets,
@@ -21,7 +22,7 @@ That is to be expected however as it is the dedicated environment
 for everything related to the Jupyter ecosystem.
 
 !!! attention
-    First user of each GCP project's Polyaxon server is to begin with a
+    The first user of each project is to begin with a
     VSCode service as it is required in setting up
     the folder for dedicated workspaces through an integrated terminal.
 
@@ -30,62 +31,38 @@ for everything related to the Jupyter ecosystem.
 The VSCode service to be created will be using a Docker image. You
 can use the Dockerfile that is provided out-of-the-box
 `docker/{{cookiecutter.repo_name}}-poly-vscode.Dockerfile` to build a
-Docker image to be pushed to your project's container registry (GCR) or
+Docker image to be pushed to your project's container registry or
 you can customise that same Dockerfile to your liking.
 Let's build the image:
-{% if cookiecutter.gcr_personal_subdir == 'No' %}
+
 === "Linux/macOS"
 
     ```bash
-    $ export GCP_PROJECT_ID={{cookiecutter.gcp_project_id}}
     $ docker build \
-        -t asia.gcr.io/$GCP_PROJECT_ID/vscode-server:0.1.0 \
-        -f docker/{{cookiecutter.repo_name}}-poly-vscode.Dockerfile \
+        -t "{{cookiecutter.harbor_registry_project_path}}/vscode-server:0.1.0" \
+        -f docker/{{cookiecutter.repo_name}}-vscode.Dockerfile \
         --platform linux/amd64 .
-    $ docker push asia.gcr.io/$GCP_PROJECT_ID/vscode-server:0.1.0
+    $ docker push {{cookiecutter.harbor_registry_project_path}}/vscode-server:0.1.0
     ```
 
 === "Windows PowerShell"
 
     ```powershell
-    $ $GCP_PROJECT_ID='{{cookiecutter.gcp_project_id}}'
     $ docker build `
-        -t asia.gcr.io/$GCP_PROJECT_ID/vscode-server:0.1.0 `
-        -f docker/{{cookiecutter.repo_name}}-poly-vscode.Dockerfile `
+        -t "{{cookiecutter.harbor_registry_project_path}}/vscode-server:0.1.0" `
+        -f docker/{{cookiecutter.repo_name}}-vscode.Dockerfile `
         --platform linux/amd64 .
-    $ docker push asia.gcr.io/$GCP_PROJECT_ID/vscode-server:0.1.0
-    ```
-{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
-=== "Linux/macOS"
-
-    ```bash
-    $ export GCP_PROJECT_ID={{cookiecutter.gcp_project_id}}
-    $ docker build \
-        -t asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/vscode-server:0.1.0 \
-        -f docker/{{cookiecutter.repo_name}}-poly-vscode.Dockerfile \
-        --platform linux/amd64 .
-    $ docker push asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/vscode-server:0.1.0
+    $ docker push {{cookiecutter.harbor_registry_project_path}}/vscode-server:0.1.0
     ```
 
-=== "Windows PowerShell"
-
-    ```powershell
-    $ $GCP_PROJECT_ID='{{cookiecutter.gcp_project_id}}'
-    $ docker build `
-        -t asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/vscode-server:0.1.0 `
-        -f docker/{{cookiecutter.repo_name}}-poly-vscode.Dockerfile `
-        --platform linux/amd64 .
-    $ docker push asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/vscode-server:0.1.0
-    ```
-{% endif %}
 Push the configurations to the Polyaxon server to start up the VSCode
 service:
-{% if cookiecutter.gcr_personal_subdir == 'No' %}
+
 === "Linux/macOS"
 
     ```bash
     $ polyaxon run -f aisg-context/polyaxon/polyaxonfiles/vscode-service.yml \
-        -P DOCKER_IMAGE="asia.gcr.io/$GCP_PROJECT_ID/vscode-server:0.1.0" \
+        -P DOCKER_IMAGE="{{cookiecutter.harbor_registry_project_path}}/vscode-server:0.1.0" \
         -P WORKING_DIR="/polyaxon-v1-data" \
         -p {{cookiecutter.repo_name}}-<YOUR_NAME>
     ```
@@ -94,40 +71,15 @@ service:
 
     ```bash
     $ polyaxon run -f aisg-context/polyaxon/polyaxonfiles/vscode-service.yml `
-        -P DOCKER_IMAGE="asia.gcr.io/$GCP_PROJECT_ID/vscode-server:0.1.0" `
+        -P DOCKER_IMAGE="{{cookiecutter.harbor_registry_project_path}}/vscode-server:0.1.0" `
         -P WORKING_DIR="/polyaxon-v1-data" `
         -p {{cookiecutter.repo_name}}-<YOUR_NAME>
-    ```
-{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
-=== "Linux/macOS"
-
-    ```bash
-    $ polyaxon run -f aisg-context/polyaxon/polyaxonfiles/vscode-service.yml \
-        -P DOCKER_IMAGE="asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/vscode-server:0.1.0" \
-        -P WORKING_DIR="/polyaxon-v1-data" \
-        -p {{cookiecutter.repo_name}}-<YOUR_NAME>
-    ```
-
-=== "Windows PowerShell"
-
-    ```bash
-    $ polyaxon run -f aisg-context/polyaxon/polyaxonfiles/vscode-service.yml `
-        -P DOCKER_IMAGE="asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/vscode-server:0.1.0" `
-        -P WORKING_DIR="/polyaxon-v1-data" `
-        -p {{cookiecutter.repo_name}}-<YOUR_NAME>
-    ```
-{% endif %}
-
-!!! attention
-    For Windows users, do not use Git Bash while running `polyaxon run`.
-    Git Bash unnecessarily adds extra path locationg after
-    `/polyaxon-v1-data` for some reason, so use a different shell
-    instead.
+	```
 
 - `-P` is used to pass an input for a parameter defined in the
 Polyaxonfile that is in question. In this case, we are specifying to the
 Polyaxon service that we intend to use the Docker image
-`asia.gcr.io/$GCP_PROJECT_ID/vscode-server:0.1.0` and to
+`{{cookiecutter.harbor_registry_project_path}}/vscode-server:0.1.0` and to
 work from the path that we have
 specified, which is `/polyaxon-v1-data` where data and artifacts will
 be persisted.
@@ -154,7 +106,7 @@ dedicated to this service.
 ![Polyaxon v1- VSCode Service Interface](../assets/screenshots/polyaxon-v1-vscode-service-interface.png)
 
 !!! important
-    Now, open up an integrated terminal within the Polyaxon
+    Now, open up an integrated terminal within the Kubernetes
     VSCode environment
     which can be done using the
     keyboard shortcut <code>Ctrl + Shift + `</code>.
@@ -258,59 +210,35 @@ While Jupyter Notebooks are viewable, editable and executable within
 a VSCode environment, most are still more familiar with Jupyter's
 interface for interacting with or editing notebooks. We can spin up
 a JupyterLab service on Polyaxon:
-{% if cookiecutter.gcr_personal_subdir == 'No' %}
+
 === "Linux/macOS"
 
     ```bash
-    $ export GCP_PROJECT_ID={{cookiecutter.gcp_project_id}}
     $ docker build \
-        -t asia.gcr.io/$GCP_PROJECT_ID/jupyter-server:0.1.0 \
-        -f docker/{{cookiecutter.repo_name}}-poly-jupyter.Dockerfile \
+        -t {{cookiecutter.harbor_registry_project_path}}/jupyter-server:0.1.0 \
+        -f docker/{{cookiecutter.repo_name}}-jupyter.Dockerfile \
         --platform linux/amd64 .
-    $ docker push asia.gcr.io/$GCP_PROJECT_ID/jupyter-server:0.1.0
+    $ docker push {{cookiecutter.harbor_registry_project_path}}/jupyter-server:0.1.0
     ```
 
 === "Windows PowerShell"
 
     ```powershell
-    $ $GCP_PROJECT_ID='{{cookiecutter.gcp_project_id}}'
     $ docker build `
-        -t asia.gcr.io/$GCP_PROJECT_ID/jupyter-server:0.1.0 `
-        -f docker/{{cookiecutter.repo_name}}-poly-jupyter.Dockerfile `
+        -t {{cookiecutter.harbor_registry_project_path}}/jupyter-server:0.1.0 `
+        -f docker/{{cookiecutter.repo_name}}-jupyter.Dockerfile `
         --platform linux/amd64 .
-    $ docker push asia.gcr.io/$GCP_PROJECT_ID/jupyter-server:0.1.0
-    ```
-{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
-=== "Linux/macOS"
-
-    ```bash
-    $ export GCP_PROJECT_ID={{cookiecutter.gcp_project_id}}
-    $ docker build \
-        -t asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/jupyter-server:0.1.0 \
-        -f docker/{{cookiecutter.repo_name}}-poly-jupyter.Dockerfile \
-        --platform linux/amd64 .
-    $ docker push asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/jupyter-server:0.1.0
+    $ docker push {{cookiecutter.harbor_registry_project_path}}/jupyter-server:0.1.0
     ```
 
-=== "Windows PowerShell"
-
-    ```powershell
-    $ $GCP_PROJECT_ID='{{cookiecutter.gcp_project_id}}'
-    $ docker build `
-        -t asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/jupyter-server:0.1.0 `
-        -f docker/{{cookiecutter.repo_name}}-poly-jupyter.Dockerfile `
-        --platform linux/amd64 .
-    $ docker push asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/jupyter-server:0.1.0
-    ```
-{% endif %}
 Push the configurations to the Polyaxon server to start up the Jupyter
 service:
-{% if cookiecutter.gcr_personal_subdir == 'No' %}
+
 === "Linux/macOS"
 
     ```bash
     $ polyaxon run -f aisg-context/polyaxon/polyaxonfiles/jupyter-service.yml \
-        -P DOCKER_IMAGE="asia.gcr.io/$GCP_PROJECT_ID/jupyter-server:0.1.0" \
+        -P DOCKER_IMAGE="{{cookiecutter.harbor_registry_project_path}}/jupyter-server:0.1.0" \
         -P WORKING_DIR="/polyaxon-v1-data" \
         -p {{cookiecutter.repo_name}}-<YOUR_NAME>
     ```
@@ -319,47 +247,23 @@ service:
 
     ```powershell
     $ polyaxon run -f aisg-context/polyaxon/polyaxonfiles/jupyter-service.yml `
-        -P DOCKER_IMAGE="asia.gcr.io/$GCP_PROJECT_ID/jupyter-server:0.1.0" `
+        -P DOCKER_IMAGE="{{cookiecutter.harbor_registry_project_path}}/jupyter-server:0.1.0" `
         -P WORKING_DIR="/polyaxon-v1-data" `
         -p {{cookiecutter.repo_name}}-<YOUR_NAME>
     ```
-{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
-=== "Linux/macOS"
-
-    ```bash
-    $ polyaxon run -f aisg-context/polyaxon/polyaxonfiles/jupyter-service.yml \
-        -P DOCKER_IMAGE="asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/jupyter-server:0.1.0" \
-        -P WORKING_DIR="/polyaxon-v1-data" \
-        -p {{cookiecutter.repo_name}}-<YOUR_NAME>
-    ```
-
-=== "Windows PowerShell"
-
-    ```powershell
-    $ polyaxon run -f aisg-context/polyaxon/polyaxonfiles/jupyter-service.yml `
-        -P DOCKER_IMAGE="asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/jupyter-server:0.1.0" `
-        -P WORKING_DIR="/polyaxon-v1-data" `
-        -p {{cookiecutter.repo_name}}-<YOUR_NAME>
-    ```
-{% endif %}
-
-!!! attention
-    For Windows users, do not use Git Bash while running `polyaxon run`.
-    Git Bash unnecessarily adds extra path locationg after
-    `/polyaxon-v1-data` for some reason, so use a different shell
-    instead.
 
 Now head over to the services dashboard under your project.
 The service should be accompanied with the tags `jupyter`,
 `notebook` and `lab`.
-
-![Polyaxon v1- JupyterLab Service Interface](../assets/screenshots/polyaxon-v1-jupyter-service-interface.png)
 
 !!! Info
     Do head over
     [here](./05-virtual-env.md#jupyter-kernel-for-jupyterlab)
     on how to enable the usage of virtual `conda` environments within
     JupyterLab.
+
+After the deployment is up and ready, we can follow the instructions provided by Helm
+to access the JupyterLab server!
 
 ## Using Docker within Polyaxon Services
 
@@ -370,41 +274,8 @@ The service should be accompanied with the tags `jupyter`,
     themselves is not feasible by default and while possible,
     should be avoided.
 
-## Cloud SDK for Development Environment
-
-!!! attention
-    Through the default boilerplate Dockerfiles, the Google Cloud SDK
-    is __installed only for VSCode__ among the development
-    environment services.
-
-As mentioned
-[here](./03-mlops-components-platform.md#secrets-credentials-on-kubernetes),
-credentials or secrets can be attached to Polyaxon services or jobs
-when configured properly. In doing so, you can make use of Google
-service accounts to interact with GCP services or resources.
-
-You can configure the `gcloud` CLI to make use of the
-service account credentials attached to the services or jobs,
-which its path is set to the environment variable
-`GOOGLE_APPLICATION_CREDENTIALS`:
-
-```bash
-$ gcloud auth activate-service-account <SA_CLIENT_EMAIL_FROM_SA_KEY>@{{cookiecutter.gcp_project_id}}.iam.gserviceaccount.com --key-file=$GOOGLE_APPLICATION_CREDENTIALS
-```
-
-Once the service account has been configured, examples of actions you
-can carry out consists of the following:
-
-- list objects within GCS buckets
-- create objects within GCS buckets
-- list deployed pods within a GKE cluster
-
-The service account is granted a custom role with specific
-permissions deemed needed by AI engineers.
-
 __Reference(s):__
 
 - [Polyaxon Docs - Run CLI Reference](https://polyaxon.com/docs/core/cli/run/)
 - [Polyaxon - Integrations](https://polyaxon.com/integrations/)
-- [Cloud SDK Reference - gcloud auth activate-service-account](https://cloud.google.com/sdk/gcloud/reference/auth/activate-service-account)
 - [Using Docker-in-Docker for your CI or testing environment? Think twice. - jpetazzo](https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/)

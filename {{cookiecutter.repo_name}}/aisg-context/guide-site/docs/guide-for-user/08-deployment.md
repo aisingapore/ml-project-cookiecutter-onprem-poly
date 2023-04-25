@@ -21,31 +21,22 @@ __Reference(s):__
 Seen in
 ["Model Training"](./07-job-orchestration.md#model-training)
 , we have the trained models
-uploaded to GCS through the MLflow Tracking server (done through
+uploaded to ECS through the MLflow Tracking server (done through
 autolog). With that, we have the following pointers to take note of:
 
 - By default, each MLflow experiment run is given a unique ID.
-- When artifacts are uploaded to GCS through MLflow,
+- When artifacts are uploaded to ECS through MLflow,
   the artifacts are located within directories named after the
   unique IDs of the runs.
-{% if cookiecutter.gcr_personal_subdir == 'No' %}
 - This guide by default uploads your artifacts to the following
-  directory on GCS:
-  `gs://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server`.
+  directory on ECS:
+  `s3://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server`.
 - Artifacts for specific runs will be uploaded to a directory with a
   convention similar to the following:
-  `gs://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server/<MLFLOW_EXPERIMENT_UUID>`.
-{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
-- This guide by default uploads your artifacts to the following
-  directory on GCS:
-  `gs://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server/{{cookiecutter.author_name}}`.
-- Artifacts for specific runs will be uploaded to a directory with a
-  convention similar to the following:
-  `gs://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server/{{cookiecutter.author_name}}/<MLFLOW_EXPERIMENT_UUID>`.
-{% endif %}
+  `s3://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server/<MLFLOW_EXPERIMENT_UUID>`.
 - With this path/URI, we can use
-  [`gsutil`](https://cloud.google.com/storage/docs/gsutil)
-  to download the predictive model from GCS into a mounted volume when
+  the AWS CLI
+  to download the predictive model from ECS into a mounted volume when
   we run the Docker image for the REST APIs.
 
 Now that we have established on how we are to obtain the models for the
@@ -90,39 +81,23 @@ Once the ID of the MLflow run has been obtained,
 let's download the model that we intend to serve.
 Assuming you're in the root of this template's repository, execute the
 following commands:
-{% if cookiecutter.gcr_personal_subdir == 'No' %}
+
 === "Linux/macOS"
 
     ```bash
     $ export PRED_MODEL_UUID="<MLFLOW_EXPERIMENT_UUID>"
-    $ export PRED_MODEL_GCS_URI="gs://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server/$PRED_MODEL_UUID"
-    $ gsutil cp -r $PRED_MODEL_GCS_URI ./models
+    $ export PRED_MODEL_ECS_S3_URI="s3://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server/$PRED_MODEL_UUID"
+    $ gsutil cp -r $PRED_MODEL_ECS_S3_URI ./models
     ```
 
 === "Windows PowerShell"
 
     ```powershell
     $ $Env:PRED_MODEL_UUID='<MLFLOW_EXPERIMENT_UUID>'
-    $ $PRED_MODEL_GCS_URI="gs://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server/$Env:PRED_MODEL_UUID"
-    $ gsutil cp -r $PRED_MODEL_GCS_URI .\models
-    ```
-{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
-=== "Linux/macOS"
-
-    ```bash
-    $ export PRED_MODEL_UUID="<MLFLOW_EXPERIMENT_UUID>"
-    $ export PRED_MODEL_GCS_URI="gs://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server/{{cookiecutter.author_name}}/$PRED_MODEL_UUID"
-    $ gsutil cp -r $PRED_MODEL_GCS_URI ./models
+    $ $PRED_MODEL_ECS_S3_URI="s3://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server/$Env:PRED_MODEL_UUID"
+    $ gsutil cp -r $PRED_MODEL_ECS_S3_URI .\models
     ```
 
-=== "Windows PowerShell"
-
-    ```powershell
-    $ $Env:PRED_MODEL_UUID='<MLFLOW_EXPERIMENT_UUID>'
-    $ $PRED_MODEL_GCS_URI="gs://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server/{{cookiecutter.author_name}}/$Env:PRED_MODEL_UUID"
-    $ gsutil cp -r $PRED_MODEL_GCS_URI .\models
-    ```
-{% endif %}
 Executing the commands above will download the artifacts related to the
 experiment run `<MLFLOW_EXPERIMENT_UUID>` to this repository's
 subdirectory `models`.
@@ -251,14 +226,13 @@ reproducibility but it makes it easier for the server to be deployed
 on any server/infrastructure that can run a Docker container.
 A boilerplate
 Dockerfile is provided to containerise the FastAPI server:
-{% if cookiecutter.gcr_personal_subdir == 'No' %}
+
 === "Linux/macOS"
 
     ```bash
-    $ export GCP_PROJECT_ID={{cookiecutter.gcp_project_id}}
     # Ensure that you are in the root of the repository
     $ docker build \
-        -t asia.gcr.io/$GCP_PROJECT_ID/fastapi-server:0.1.0 \
+        -t {{cookiecutter.harbor_registry_project_path}}/fastapi-server:0.1.0 \
         --build-arg PRED_MODEL_UUID="$PRED_MODEL_UUID" \
         -f docker/{{cookiecutter.repo_name}}-fastapi.Dockerfile \
         --platform linux/amd64 .
@@ -267,39 +241,14 @@ Dockerfile is provided to containerise the FastAPI server:
 === "Windows PowerShell"
 
     ```powershell
-    $ $GCP_PROJECT_ID='{{cookiecutter.gcp_project_id}}'
     # Ensure that you are in the root of the repository
     $ docker build `
-        -t asia.gcr.io/$GCP_PROJECT_ID/fastapi-server:0.1.0 `
+        -t {{cookiecutter.harbor_registry_project_path}}/fastapi-server:0.1.0 `
         --build-arg PRED_MODEL_UUID="$Env:PRED_MODEL_UUID" `
         -f docker/{{cookiecutter.repo_name}}-fastapi.Dockerfile `
         --platform linux/amd64 .
     ```
-{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
-=== "Linux/macOS"
 
-    ```bash
-    $ export GCP_PROJECT_ID={{cookiecutter.gcp_project_id}}
-    # Ensure that you are in the root of the repository
-    $ docker build \
-        -t asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/fastapi-server:0.1.0 \
-        --build-arg PRED_MODEL_UUID="$PRED_MODEL_UUID" \
-        -f docker/{{cookiecutter.repo_name}}-fastapi.Dockerfile \
-        --platform linux/amd64 .
-    ```
-
-=== "Windows PowerShell"
-
-    ```powershell
-    $ $GCP_PROJECT_ID='{{cookiecutter.gcp_project_id}}'
-    # Ensure that you are in the root of the repository
-    $ docker build `
-        -t asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/fastapi-server:0.1.0 `
-        --build-arg PRED_MODEL_UUID="$Env:PRED_MODEL_UUID" `
-        -f docker/{{cookiecutter.repo_name}}-fastapi.Dockerfile `
-        --platform linux/amd64 .
-    ```
-{% endif %}
 The Docker build command above requires an argument to be passed and it
 is basically the same unique MLflow run ID that was used above.
 The ID would then be used to create environment variables that would
@@ -312,7 +261,7 @@ into the mounted volumes and be referred to by the FastAPI Pydantic
 models.
 
 Let's try running the Docker container now:
-{% if cookiecutter.gcr_personal_subdir == 'No' %}
+
 === "Linux/macOS"
 
     ```bash
@@ -320,10 +269,10 @@ Let's try running the Docker container now:
     $ sudo chgrp -R 2222 models
     $ docker run --rm -p 8080:8080 \
         --name fastapi-server \
-        -v <PATH_TO_SA_JSON_FILE>:/var/secret/cloud.google.com/gcp-service-account.json \
-        -v $PWD/models:/home/aisg/from-gcs \
-        --env GOOGLE_APPLICATION_CREDENTIALS=/var/secret/cloud.google.com/gcp-service-account.json \
-        asia.gcr.io/$GCP_PROJECT_ID/fastapi-server:0.1.0
+        -v $PWD/models:/home/aisg/from-ecs \
+        --env AWS_ACCESS_KEY_ID='<YOUR_AWS_ACCESS_KEY_ID_HERE>' \
+        --env AWS_SECRET_ACCESS_KEY='<YOUR_AWS_SECRET_ACCESS_KEY_HERE>' \
+        {{cookiecutter.harbor_registry_project_path}}/fastapi-server:0.1.0
     ```
 
 === "Windows PowerShell"
@@ -331,36 +280,12 @@ Let's try running the Docker container now:
     ```powershell
     $ docker run --rm -p 8080:8080 `
         --name fastapi-server `
-        -v "<PATH_TO_SA_JSON_FILE>:/var/secret/cloud.google.com/gcp-service-account.json" `
-        -v "$(Get-Location)\models:/home/aisg/from-gcs" `
-        --env GOOGLE_APPLICATION_CREDENTIALS="/var/secret/cloud.google.com/gcp-service-account.json" `
-        asia.gcr.io/$GCP_PROJECT_ID/fastapi-server:0.1.0
-    ```
-{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
-=== "Linux/macOS"
-
-    ```bash
-    # First make the `models` folder accessible to user within Docker container
-    $ sudo chgrp -R 2222 models
-    $ docker run --rm -p 8080:8080 \
-        --name fastapi-server \
-        -v <PATH_TO_SA_JSON_FILE>:/var/secret/cloud.google.com/gcp-service-account.json \
-        -v $PWD/models:/home/aisg/from-gcs \
-        --env GOOGLE_APPLICATION_CREDENTIALS=/var/secret/cloud.google.com/gcp-service-account.json \
-        asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/fastapi-server:0.1.0
+        -v "$(Get-Location)\models:/home/aisg/from-ecs" `
+        --env AWS_ACCESS_KEY_ID='<YOUR_AWS_ACCESS_KEY_ID_HERE>' `
+        --env AWS_SECRET_ACCESS_KEY='<YOUR_AWS_SECRET_ACCESS_KEY_HERE>' `
+        {{cookiecutter.harbor_registry_project_path}}/fastapi-server:0.1.0
     ```
 
-=== "Windows PowerShell"
-
-    ```powershell
-    $ docker run --rm -p 8080:8080 `
-        --name fastapi-server `
-        -v "<PATH_TO_SA_JSON_FILE>:/var/secret/cloud.google.com/gcp-service-account.json" `
-        -v "$(Get-Location)\models:/home/aisg/from-gcs" `
-        --env GOOGLE_APPLICATION_CREDENTIALS="/var/secret/cloud.google.com/gcp-service-account.json" `
-        asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/fastapi-server:0.1.0
-    ```
-{% endif %}
 Let's go through a couple of the flags used above:
 
 - `--rm`: Automatically stops the container when it exits or when you
@@ -370,7 +295,7 @@ Let's go through a couple of the flags used above:
 - `-v`: Bind mounts files or directories from the host machine to the
   container. In this case, we are mounting the SA file and the `models`
   folder to the container. The SA file is needed for `gsutil`
-  to download the model from GCS and the `models` folder will persist
+  to download the model from ECS and the `models` folder will persist
   the downloaded models.
 - `--env`: This sets environment variables within the container.
 
@@ -399,22 +324,18 @@ To stop the container:
 $ docker container stop fastapi-server
 ```
 
-Push the Docker image to the GCR:
-{% if cookiecutter.gcr_personal_subdir == 'No' %}
+Push the Docker image to the Harbor:
+
 ```bash
-$ docker push asia.gcr.io/$GCP_PROJECT_ID/fastapi-server:0.1.0
+$ docker push {{cookiecutter.harbor_registry_project_path}}/fastapi-server:0.1.0
 ```
-{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
-```bash
-$ docker push asia.gcr.io/$GCP_PROJECT_ID/{{cookiecutter.author_name}}/fastapi-server:0.1.0
-```
-{% endif %}
+
 With this Docker image, you can spin up a VM (Compute Engine instance)
 that has Docker installed and run the container on it for deployment.
 You can also deploy the image within a Kubernetes cluster for ease of
 scaling.
 
-### Deploy to GKE
+### Deploy to Kubernetes
 
 !!! warning
 
@@ -424,8 +345,8 @@ scaling.
     permissions, please request assistance from your team lead or the
     administrators.
 
-To deploy the FastAPI server on GKE, you can make use of the sample
-Kubernetes manifest files provided with this template:
+To deploy the FastAPI server on Kubernetes, you can make use of the
+sample Kubernetes manifest files provided with this template:
 
 === "Local Machine"
 
@@ -436,7 +357,7 @@ Kubernetes manifest files provided with this template:
 
 To access the server, you can port-forward the service to a local port
 like such:
-{% if cookiecutter.gcr_personal_subdir == 'No' %}
+
 === "Local Machine"
 
     ```bash
@@ -444,15 +365,7 @@ like such:
     Forwarding from 127.0.0.1:8080 -> 8080
     Forwarding from [::1]:8080 -> 8080
     ```
-{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
-=== "Local Machine"
 
-    ```bash
-    $ kubectl port-forward service/fastapi-server-{{cookiecutter.author_name.replace('_', '-')}}-svc 8080:8080 --namespace=polyaxon-v1
-    Forwarding from 127.0.0.1:8080 -> 8080
-    Forwarding from [::1]:8080 -> 8080
-    ```
-{% endif %}
 You can view the documentation for the API at
 [`http://localhost:8080/docs`](http://localhost:8080/docs). You can also
 make a request to the API like so:
@@ -478,21 +391,14 @@ make a request to the API like so:
 
     Please tear down the deployment and service objects once they are
     not required.
-    {% if cookiecutter.gcr_personal_subdir == 'No' %}
+
     === "Local Machine"
 
         ```bash
         $ kubectl delete fastapi-server-deployment --namespace=polyaxon-v1
         $ kubectl delete fastapi-server-svc --namespace=polyaxon-v1
         ```
-    {% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
-    === "Local Machine"
 
-        ```bash
-        $ kubectl delete fastapi-server-{{cookiecutter.author_name.replace('_', '-')}}-deployment --namespace=polyaxon-v1
-        $ kubectl delete fastapi-server-{{cookiecutter.author_name.replace('_', '-')}}-svc --namespace=polyaxon-v1
-        ```
-    {% endif %}
     If you do not have the right
     permissions, please request assistance from your team lead or the
     administrators.

@@ -27,7 +27,7 @@ train:
   mlflow_autolog: false
   mlflow_tracking_uri: "mlflow-nginx-server-svc.polyaxon-v1.svc.local"
   mlflow_exp_name: "{{cookiecutter.repo_name}}"
-  mlflow_artifact_location: "gs://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server"
+  mlflow_artifact_location: "s3://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server"
   data_path: "../{{cookiecutter.repo_name}}-data/processed/subdir"
   val_split: 0.2
   bs: 32

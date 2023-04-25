@@ -6,8 +6,8 @@ Aside from an internet connection, you would need the following to
 follow through with the guide:
 
 - NUS Staff/Student account
-- Google account with `@aisingapore.org`/`@aiap.sg` domains provisioned
-  by AI Singapore
+- An Azure account (for LDAP authentication to access internal/on-premise
+  services)
 - PC with the following installed:
     - If your machine is with a Windows OS, use
       [__PowerShell__](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.2)
@@ -27,16 +27,20 @@ follow through with the guide:
       (recommended) or
       [__Anaconda__](https://docs.anaconda.com/anaconda/install/index.html):
       Virtual environment manager. The former is the minimal installer.
-    - __[`gcloud`](https://cloud.google.com/sdk/docs/install):__
-      CLI for interacting with GCP resources.
+    - __[`aws cli`](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html):__
+      CLI for interacting with AISG's on-premise object storage that
+      uses S3 protocol.
     - __[`kubectl`](https://kubernetes.io/docs/tasks/tools/):__
       CLI for Kubernetes.
-    - *(Optional)* __[`helm`](https://helm.sh/docs/intro/install/):__
+    - __[`helm`](https://helm.sh/docs/intro/install/):__
       CLI for Kubernetes' package manager.
-- Access to a project on
-  [Google Cloud Platform](https://console.cloud.google.com).
-  See [here](./02-preface.md#google-cloud-platform-gcp-projects)
-  for more information on this.
+- Access to the following on-premise services/resources:
+  - A repository on [AI Singapore's on-premise GitLab instance](https://gitlab.aisingapore.net)
+  - A Kubernetes cluster
+    (viewable on the on-premise [Rancher dashboard](https://rancher.aisingapore.net))
+  - Access to a project on AI Singapore's [Harbor registry](https://registry.aisingapore.net/)
+  - MLflow Tracking server for the project
+  - An ECS (S3) bucket for object storage
 
 !!! info
     Wherever relevant, you can toggle between the different commands
@@ -70,15 +74,14 @@ follow through with the guide:
 ## NUS VPN
 
 Your credentials for your NUS Staff/Student account is needed to
-login to NUS' VPN for access to the following:
+login to NUS' VPN for access to the following on-premise services:
 
-- AI Singapore's GitLab instance
-- NUS resources
-
-In order to interact with remote Git repositories situated on
-AI Singapore's GitLab instance (clone, push, fetch, etc.)
-outside of NUS' network or GCP (for regions `asia-southeast1` and
-`us-central1`), you would need to login to NUS' VPN.
+- GitLab ([gitlab.aisingapore.net](https://gitlab.aisingapore.net))
+- Kubernetes (Rancher) cluster
+- Rancher dashboard ([rancher.aisingapore.net](https://rancher.aisingapore.net))
+- Harbor registry ([registry.aisingapore.net](https://registry.aisingapore.net/))
+- MLflow Tracking server
+- ECS (S3) object storage
 
 ## GitLab
 

@@ -5,9 +5,7 @@ ARG CONDA_ENV_FILE="{{cookiecutter.repo_name}}-conda-env.yml"
 ARG CONDA_ENV_NAME="{{cookiecutter.repo_name}}"
 ARG PROJECT_USER="aisg"
 ARG HOME_DIR="/home/$PROJECT_USER"
-# DVC arguments
-ARG DVC_VERSION="2.8.3"
-ARG DVC_BINARY_NAME="dvc_2.8.3_amd64.deb"
+
 # Miniconda arguments
 ARG CONDA_HOME="/miniconda3"
 ARG CONDA_BIN="$CONDA_HOME/bin/conda"
@@ -29,10 +27,6 @@ RUN apt-get update && \
 
 RUN wget https://github.com/mikefarah/yq/releases/download/v4.16.1/yq_linux_amd64.tar.gz -O - |\
     tar xz && mv yq_linux_amd64 /usr/bin/yq
-
-RUN wget "https://github.com/iterative/dvc/releases/download/$DVC_VERSION/$DVC_BINARY_NAME" && \
-    apt install -y "./$DVC_BINARY_NAME" && \
-    rm "./$DVC_BINARY_NAME"
 
 COPY $REPO_DIR {{cookiecutter.repo_name}}
 

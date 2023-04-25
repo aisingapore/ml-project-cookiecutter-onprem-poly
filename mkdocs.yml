@@ -6,8 +6,8 @@ site_description: >-
   "{{cookiecutter.description}}"
 
 # Repository
-repo_name: "aisingapore/ml-project-cookiecutter-gcp"
-repo_url: "https://github.com/aisingapore/ml-project-cookiecutter-gcp"
+repo_name: "aisingapore/ml-project-cookiecutter-onprem-poly"
+repo_url: "https://github.com/aisingapore/ml-project-cookiecutter-onprem-poly"
 edit_uri: ""
 
 # Copyright

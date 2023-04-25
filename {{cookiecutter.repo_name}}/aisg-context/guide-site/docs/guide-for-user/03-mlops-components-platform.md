@@ -5,19 +5,7 @@
 The images below showcase the different components that this guide
 will cover as well as how each of them relate to each other.
 
-!!! info
-    The diagrams follow the
-    [C4 model](https://c4model.com/)
-    for visualising and describing
-    software architecture.
-
-### Context View
-
-![MLOps Components Flowchart - Context View](../assets/images/aisg-mlops-gcp-stack-feb2022-c4-context.png)
-
-### Containers View
-
-![MLOps Components Flowchart - Containers View](../assets/images/aisg-mlops-gcp-stack-feb2022-c4-containers.png)
+![MLOps Components Flowchart](../assets/images/aisg-mlops-onprem-stack-apr2023.png)
 
 ## Kubernetes
 
@@ -28,78 +16,132 @@ pipelines and manage containerised applications and environments.
 
 From the Kubernetes site:
 
-> _Kubernetes, also known as K8s, is an open-source system for automating_
-> _deployment, scaling, and management of containerized applications._
-> _It groups containers that make up an application into logical units_
-> _for easy management and discovery._
+> _Kubernetes, also known as K8s, is an open-source system for_
+> _automating deployment, scaling, and management of containerized_
+> _applications. It groups containers that make up an application into_
+> _logical units for easy management and discovery._
 
 A number of services and applications that you will be interacting with
-(or deploying) are deployed (to be deployed) within a GKE cluster
-environment. A GKE cluster should be set up upon creation of your GCP
-project, viewable
-[here](https://console.cloud.google.com/kubernetes/list/overview).
-If this is not the case, please notify the MLOps team at
-`mlops@aisingapore.org`.
+(or deploying) are deployed (to be deployed) within a
+Rancher Kubernetes Engine (RKE) environment. An RKE cluster would have
+been set up and a Kubernetes `config` file containing relevant
+credentials should have been shared with you.
 
-Some of the MLOps components which the GKE environment will be
+If this is not the case, please notify the MLOps team at
+`mlops@aisingapore.org` or wherever any of the members are reachable.
+
+Some of the MLOps components which the Kubernetes environment will be
 relevant for are:
 
 - Developer Workspace
 - Model Experimentation
-- Experiment Tracking
-- Data/Artifact Storage
+- Experiment & Pipeline Tracking
+- Data & Artefact Storage
+- Model Registry
 - Model Serving
 
-What this means is that AI engineers would need to be able to access the
-GKE cluster. Documentation for obtaining a cluster's configuration can
-be found
-[here](https://cloud.google.com/kubernetes-engine/docs/how-to/cluster-access-for-kubectl#generate_kubeconfig_entry).
+### `kubectl` Configuration for RKE
 
-### `kubectl` Configuration for GKE
+Throughout this template, we will be leveraging heavily on Kubernetes to
+orchestrate our workflow and jobs; it's imperative that we set up our
+Kubernetes client right.
 
-If you would like to view or create Kubernetes (GKE) resources within
-development environments (or even on your own local machine), you can
-run the following command to connect to the GKE
-cluster which by default
-your user or service account
-should have access to:
+By default, Kubernetes will seek for the credential files under the
+directory `~/.kube`. Simply place the `config` file, provided by your
+administrator under the directory `/.kube` to gain access to the
+cluster relevant for the project.
 
-```bash
-$ gcloud container clusters get-credentials <NAME_OF_CLUSTER> --zone asia-southeast1-c --project {{cookiecutter.gcp_project_id}}
-```
+!!! note
+    The config file provided might be not be named `config`; simply
+    rename and move the file into the directory as instructed above.
 
-After obtaining the credentials and configurations for the GKE cluster,
+    If this is not your first Kubernetes cluster and you would like to
+    consolidate your Kubernetes configurations, run the following
+    __(after doing your due diligence by backing up the original file)__:
+
+    === "Linux/macOS"
+
+        ```bash
+        $ export KUBECONFIG="<YOUR_EXPLICIT_HOME_DIRECTORY>/.kube/config:<PATH_TO_NEW_CONFIG_FILE>"
+        $ kubectl config view --merge --flatten > config.new
+        ```
+
+    === "Windows PowerShell"
+
+        ```powershell
+        $ $KUBECONFIG="<YOUR_EXPLICIT_HOME_DIRECTORY>/.kube/config:<PATH_TO_NEW_CONFIG_FILE>"
+        $ kubectl config view --merge --flatten > config.new
+        ```
+
+    The command above will generate a new compounded config file;
+    rename the file to `config` and move it to `~/.kube`.
+
+    You can now view the contexts that are made available by the new
+    config file:
+
+    ```bash
+    $ kubectl config get-contexts
+    ```
+
+    To select and use a specific context, you can run the following:
+
+    ```bash
+    $ kubectl config use-context <CONTEXT_NAME>
+    ```
+
+    This would allow you to interact with the new cluster. Simply run
+    the command above to switch between contexts. You may also install
+    and use the [`kubectx`](https://github.com/ahmetb/kubectx) tool for
+    easier switching of contexts.
+
+After configuring access to your project's Kubernetes cluster,
 you can start to interact with the main MLOps platforms tool that you
 will be leveraging on for a development workspace, data preparation as
 well as model training.
 
 !!! caution
 
-    Non-staff engineer accounts or service accounts are granted limited
-    permissions. One would not be able to carry out certain actions with
-    the clusters such as viewing namespaces or deleting cluster
-    resources.
+    Non-staff engineer accounts or tokens/configurations are granted
+    limited permissions. Permissions for actionas such as viewing
+    namespaces or deleting cluster resources might be off limits.
 
 __Reference(s):__
 
-- [GKE Overview](https://cloud.google.com/kubernetes-engine/docs/concepts/kubernetes-engine-overview)
+- [Kubernetes Docs - Configure Access to Multiple Clusters](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/)
 
 ### Persistent Volumes
 
 Containers are ephemeral and what that translates to is that any data
 created and stored within the containers' file systems as well as any
-changes made to
-it will be gone once the container is stopped. To persist data or files,
-we would need to mount volumes to the containers. With the default
-configuration provided in this template, any services or jobs to be
-spun up on the MLOps platform Polyaxon will have a persistent volume
-attached. The volume's mount path is `/polyaxon-v1-data` and so
-anything that is stored within that path will be persisted.
+changes made to it will be gone once the container is stopped.
+To persist data or files, we would need to mount volumes to the
+containers. With the default configuration provided in this template,
+any services or jobs to be spun up on the MLOps Kubernetes platform will
+have a persistent volume attached. The volume's mount path is
+`/polyaxon-v1-data` and so anything that is stored within that path will
+be persisted.
 
 __Reference(s):__
 
 - [Kubernetes Docs - Volumes](https://kubernetes.io/docs/concepts/storage/volumes/)
 - [NetApp - What are Kubernetes persistent volumes?](https://www.netapp.com/knowledge-center/what-is-kubernetes-persistent-volumes/)
+
+### Namespaces
+
+Kubernetes allows for resources to be grouped in an isolated manner,
+even within a single cluster. This is done through the usage of
+namespaces. Examples for how namespaces can be used includes the
+isolation of resources belonging to staging and production, or isolation
+between different teams.
+
+In the context of this template and guide, we will only stick with a
+single namespace: `polyaxon-v1`, for simplicity's sake.
+So whenever Kubernetes resources are to be set up, this namespace should
+be specified.
+
+__Reference(s):__
+
+- [Kubernetes Docs - Namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)
 
 ## Polyaxon
 
@@ -107,8 +149,8 @@ __Reference(s):__
 suite of features for AI engineers to facilitate their end-to-end
 machine learning workflows. The platform is to be deployed on a GKE
 cluster; the Platforms team would have set the platform up for
-your team upon creation of the GCP project. AI engineers need not worry
-about having to administer the platform as end-consumers of the
+your team upon creation of the Kubernetes cluster. AI engineers need not
+worry about having to administer the platform as end-consumers of the
 platform.
 
 To verify if Polyaxon has been deployed on your GKE cluster,
@@ -273,137 +315,87 @@ them in later sections.
 
 ### Secrets & Credentials on Kubernetes
 
-When executing jobs on Polyaxon, credentials are needed to access
-various services like GCR or GCS. To provide your container jobs with
-access to these credentials, you need to carry out the following:
+When executing jobs on Kubernetes, credentials have to be attached to
+the pods for access to various on-premise resources such as ECS or the
+Harbor container registry. To provide your container jobs
+(or even services) with access
+to these credentials, you first need to create them.
+In the example below, we will be creating Kubernetes secrets that will
+contain credentials for ECS and Harbor.
 
-1. Download a service account key to your local machine (or obtain it
-   from the lead engineer/MLOps team) and rename it to
-   `gcp-service-account.json`. Take note of the client email detailed
-   in the JSON file. The client email should look something like
-   the following:
-   `<SA_CLIENT_EMAIL_FROM_SA_KEY>@{{cookiecutter.gcp_project_id}}.iam.gserviceaccount.com`.
-1. Create a Kubernetes secret on your Kubernetes (GKE) cluster,
-   within the same namespace where Polyaxon is deployed: `polyaxon-v1`.
-2. Configure Polyaxonfiles to refer to these secrets.
+!!! note
+    Credentials for ECS and Harbor can be obtained by the project lead
+    or the MLOps team.
 
-Before creating the secrets, do check if they already exist first:
+1. Before creating the secrets, do check if they currently exist first:
 
 === "Linux/macOS"
 
     ```bash
-    $ kubectl get secret --namespace=polyaxon-v1 | grep -E 'gcp-imagepullsecrets|gcp-sa-credentials'
+    $ kubectl get secret --namespace=polyaxon-v1 | grep -E 'harbor-credentials|ecs-s3-credentials'
     ```
 
 === "Windows PowerShell"
 
-    ```bash
-    $ kubectl get secret --namespace=polyaxon-v1 | Select-String "gcp-imagepullsecrets"
-    $ kubectl get secret --namespace=polyaxon-v1 | Select-String "gcp-sa-credentials"
+    ```powershell
+    $ kubectl get secret --namespace=polyaxon-v1 | Select-String "harbor-credentials"
+    $ kubectl get secret --namespace=polyaxon-v1 | Select-String "ecs-s3-credentials"
     ```
 
-Here are the commands to be executed for creating the secrets:
+2. If they do not exist, we can create the secrets like so:
 
 === "Linux/macOS"
 
     ```bash
-    $ export SA_CLIENT_EMAIL=<SA_CLIENT_EMAIL_FROM_SA_KEY>
-    $ export PATH_TO_SA_JSON_FILE=<PATH_TO_SA_JSON_FILE>
-    $ kubectl create secret docker-registry gcp-imagepullsecrets \
-      --docker-server=https://asia.gcr.io \
-      --docker-username=_json_key \
-      --docker-email=$SA_CLIENT_EMAIL \
-      --docker-password="$(cat $PATH_TO_SA_JSON_FILE)" \
+    $ export HARBOR_ROBOT_USER=<YOUR_HARBOR_ROBOT_USER_HERE>
+    $ export HARBOR_SECRET=<YOUR_HARBOR_SECRET_HERE>
+    $ export PATH_TO_S3_CREDENTIALS=<PATH_TO_ECS_S3_CREDENTIALS>
+    $ kubectl create secret docker-registry harbor-credentials \
+      --docker-server=https://registry.aisingapore.net \
+      --docker-username="$HARBOR_ROBOT_USER" \
+      --docker-password="$HARBOR_SECRET" \
       --namespace=polyaxon-v1
-    $ kubectl create secret generic gcp-sa-credentials \
-      --from-file $PATH_TO_SA_JSON_FILE \
+    $ kubectl create secret generic ecs-s3-credentials \
+      --from-literal=awsAccessKeyID='<YOUR_AWS_ACCESS_KEY_ID_HERE>' \
+      --from-literal=awsSecretAccessKey='<YOUR_AWS_SECRET_ACCESS_KEY_HERE>' \
+      --from-literal=ecsS3EndpointURL='https://necs.nus.edu.sg' \
       --namespace=polyaxon-v1
     ```
 
 === "Windows PowerShell"
 
     ```powershell
-    $ $SA_CLIENT_EMAIL=<SA_CLIENT_EMAIL_FROM_SA_KEY>
-    $ $PATH_TO_SA_JSON_FILE=<PATH_TO_SA_JSON_FILE>
-    $ kubectl create secret docker-registry gcp-imagepullsecrets `
-      --docker-server=https://asia.gcr.io `
-      --docker-username=_json_key `
-      --docker-email=$SA_CLIENT_EMAIL `
-      --docker-password='$(cat $PATH_TO_SA_JSON_FILE)' `
+    $ $HARBOR_ROBOT_USER=<YOUR_HARBOR_ROBOT_USER_HERE>
+    $ $HARBOR_SECRET=<YOUR_HARBOR_SECRET_HERE>
+    $ $PATH_TO_S3_CREDENTIALS=<PATH_TO_ECS_S3_CREDENTIALS>
+    $ kubectl create secret docker-registry harbor-credentials `
+      --docker-server=https://registry.aisingapore.net `
+      --docker-username="$HARBOR_ROBOT_USER" `
+      --docker-password="$HARBOR_SECRET" `
       --namespace=polyaxon-v1
-    $ kubectl create secret generic gcp-sa-credentials `
-      --from-file $PATH_TO_SA_JSON_FILE `
+    $ kubectl create secret generic ecs-s3-credentials `
+      --from-literal=awsAccessKeyID='<YOUR_AWS_ACCESS_KEY_ID_HERE>' `
+      --from-literal=awsSecretAccessKey='<YOUR_AWS_SECRET_ACCESS_KEY_HERE>' `
+      --from-literal=ecsS3EndpointURL='https://necs.nus.edu.sg' `
       --namespace=polyaxon-v1
     ```
 
-Make sure that the Polyaxonfiles for the jobs and services that requires
-your service account credentials have the following configurations
-(these snippets are included in the rendered Polyaxonfiles
-by default):
-
-```yaml
-...
-inputs:
-  - name: SA_CRED_PATH
-    description: Path to credential file for GCP service account.
-    isOptional: true
-    type: str
-    value: /var/secret/cloud.google.com/gcp-service-account.json
-    toEnv: GOOGLE_APPLICATION_CREDENTIALS
-run:
-  kind: job
-  environment:
-    imagePullSecrets: ["gcp-imagepullsecrets"]
-  volumes:
-    - name: gcp-service-account
-      secret:
-        secretName: "gcp-sa-credentials"
-  container:
-    volumeMounts:
-      - name: gcp-service-account
-        mountPath: /var/secret/cloud.google.com
-...
-```
-
-By configuring and specifying the secrets in your Polyaxonfiles like
-the above, you would be able to utilise the `gcloud` or `gsutil`
-commands within your containerised jobs/services. Here are some
-examples:
-
-- use private Docker images from GCR to spin up jobs/services on
-  Polyaxon
-- uploading model artifacts to GCS buckets within model training jobs
-- interact with GKE cluster(s) within Polyaxon jobs/services
-
-__Reference(s):__
-
-- [Kubernetes Docs - Namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)
-
-## Google Container Registry
+## Harbor Container Registry
 
 AI Singapore's emphases on reproducibility and portability of
 workflows and accompanying environments translates to heavy usage of
 containerisation. Throughout this guide, we will be building Docker
 images necessary for setting up development environments, jobs for
-the various pipelines and deployment of the predictive model.
+the various pipelines and deployment of predictive models.
 
-Within the context of GCP, the
-[Google Container Registry (GCR)](https://cloud.google.com/container-registry)
+Within the context of on-premise resources,
+[Harbor](https://github.com/goharbor/harbor)
 will be used to store and version our Docker images.
-Following authorisation to `gcloud`, you can view the image repositories
-of your project's registry like so:
-{% if cookiecutter.gcr_personal_subdir == 'No' %}
-```bash
-$ gcloud container images list --repository=asia.gcr.io/{{cookiecutter.gcp_project_id}}
-```
-{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
-```bash
-$ gcloud container images list --repository=asia.gcr.io/{{cookiecutter.gcp_project_id}}/{{cookiecutter.author_name}}
-```
-{% endif %}
-You will be pushing the Docker images to the aforementioned repository.
+
+Please refer to [this section](./02-preface.md#container-registry) to log in to the
+image registry.
 
 __Reference(s):__
 
-- [`gcloud` Reference - `gcloud container images list`](https://cloud.google.com/sdk/gcloud/reference/container/images/list)
-- [GCR Guide - Pushing & Pulling Images](https://cloud.google.com/container-registry/docs/pushing-and-pulling)
+- [Docker - Pushing & Pulling Images](https://docs.docker.com/engine/reference/commandline/images)
+- [Harbor Docs - Pulling and Pushing Images in the Docker Client](https://goharbor.io/docs/1.10/working-with-projects/working-with-images/pulling-pushing-images/)

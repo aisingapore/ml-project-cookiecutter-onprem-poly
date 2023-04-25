@@ -1,4 +1,4 @@
-# End-to-end Project Template (GCP Stack)
+# End-to-end Project Template (On-premise Stack - Polyaxon)
 
 ![AI Singapore's Kapitan MLOps EPTG Banner](./assets/images/kapitan-mlops-eptg-banner.png)
 
@@ -10,7 +10,7 @@ This template (which also serves as a guide) was generated using the
 following
 [`cookiecutter`](https://cookiecutter.readthedocs.io/en/stable/)
 template:
-https://github.com/aisingapore/ml-project-cookiecutter-gcp
+https://github.com/aisingapore/ml-project-cookiecutter-onprem
 
 This `mkdocs` site is for serving the contents of the end-to-end
 guide in a more readable manner, as opposed to plain
@@ -18,8 +18,7 @@ Markdown views. The contents of this guide have been customised
 according to the inputs provided upon generation of this repository
 through the usage of [`cruft`](https://cruft.github.io/cruft/),
 following instructions detailed
-[here](https://github.com/aisingapore/ml-project-cookiecutter-gcp/blob/master/README.md)
-.
+[here](https://github.com/aisingapore/ml-project-cookiecutter-onprem/blob/master/README.md).
 
 Inputs provided to `cookiecutter`/`cruft` for the generation of this
 template:
@@ -29,18 +28,12 @@ template:
 - __`repo_name`:__ {{cookiecutter.repo_name}}
 - __`src_package_name`:__ {{cookiecutter.src_package_name}}
 - __`src_package_name_short`:__ {{cookiecutter.src_package_name_short}}
-- __`gcp_project_id`:__ {{cookiecutter.gcp_project_id}}
-- __`gcr_personal_subdir`:__ {{cookiecutter.gcr_personal_subdir}}
+- __`harbor_registry_project_path`:__ {{cookiecutter.harbor_registry_project_path}}
 - __`author_name`:__ {{cookiecutter.author_name}}
 - __`open_source_license`:__ {{cookiecutter.open_source_license}}
 
-There are __two separate guides__:
-
-- __[User Guide](./guide-for-user/01-prerequisites):__ This guide is for the users of
-  the MLOps platforms and toolings.
-- __[Admin Guide](./guide-for-admin/01-prerequisites):__ This guide is for
-  the administrators and provisioners of the infrastructure required
-  for setting up the components of the MLOps platforms and toolings.
+This repository contains a [User Guide](./guide-for-user/01-prerequisites).
+Breakdown of the guide is listed below.
 
 ## Overview For User Guide
 
@@ -48,25 +41,24 @@ There are __two separate guides__:
 2. [Preface](./guide-for-user/02-preface.md)
 3. [MLOps Components & Platform](./guide-for-user/03-mlops-components-platform.md)
     - [Kubernetes](./guide-for-user/03-mlops-components-platform.md#kubernetes)
-        - [`kubectl` Configuration for GKE](./guide-for-user/03-mlops-components-platform.md#kubectl-configuration-for-gke)
+        - [`kubectl` Configuration for RKE](./guide-for-user/03-mlops-components-platform.md#kubectl-configuration-for-rke)
         - [Persistent Volumes](./guide-for-user/03-mlops-components-platform.md#persistent-volumes)
+        - [Namespaces](./guide-for-user/03-mlops-components-platform.md#namespaces)
     - [Polyaxon](./guide-for-user/03-mlops-components-platform.md#polyaxon)
         - [Polyaxon Dashboard](./guide-for-user/03-mlops-components-platform.md#polyaxon-dashboard)
         - [Relevant Concepts](./guide-for-user/03-mlops-components-platform.md#relevant-concepts)
-        - [Secrets & Credentials on Kubernetes](./guide-for-user/03-mlops-components-platform.md#secrets-credentials-on-kubernetes)
-    - [Google Container Registry](./guide-for-user/03-mlops-components-platform.md#google-container-registry)
+        - [Secrets & Credentials on Kubernetes](./guide-for-user/03-mlops-components-platform.md#secrets--credentials-on-kubernetes)
 4. [Development Environment](./guide-for-user/04-dev-env.md)
     - [Recommended Setup](./guide-for-user/04-dev-env.md#recommended-setup)
     - [VSCode](./guide-for-user/04-dev-env.md#vscode)
     - [JupyterLab](./guide-for-user/04-dev-env.md#jupyterlab)
     - [Using Docker within Polyaxon Services](./guide-for-user/04-dev-env.md#using-docker-within-polyaxon-services)
-    - [Cloud SDK for Development Environment](./guide-for-user/04-dev-env.md#cloud-sdk-for-development-environment)
 5. [Virtual Environment](./guide-for-user/05-virtual-env.md)
 6. [Data Storage & Versioning](./guide-for-user/06-data-storage-versioning.md)
     - [Sample Data](./guide-for-user/06-data-storage-versioning.md#sample-data)
 7. [Job Orchestration](./guide-for-user/07-job-orchestration.md)
     - [Pipeline Configuration](./guide-for-user/07-job-orchestration.md#pipeline-configuration)
-    - [Data Preparation & Preprocessing](./guide-for-user/07-job-orchestration.md#data-preparation-preprocessing)
+    - [Data Preparation & Preprocessing](./guide-for-user/07-job-orchestration.md#data-preparation--preprocessing)
     - [Model Training](./guide-for-user/07-job-orchestration.md#model-training)
         - [Experiment Tracking](./guide-for-user/07-job-orchestration.md#experiment-tracking)
         - [Container for Experiment Job](./guide-for-user/07-job-orchestration.md#container-for-experiment-job)
@@ -76,16 +68,12 @@ There are __two separate guides__:
     - [Model Serving (FastAPI)](./guide-for-user/08-deployment.md#model-serving-fastapi)
         - [Local Server](./guide-for-user/08-deployment.md#local-server)
         - [Docker Container](./guide-for-user/08-deployment.md#docker-container)
-        - [Deploy to GKE](./guide-for-user/08-deployment.md#deploy-to-gke)
+        - [Deploy to Kubernetes](./guide-for-user/08-deployment.md#deploy-to-kubernetes)
 9. [Batch Inferencing](./guide-for-user/09-batch-inferencing.md)
 10. [Continuous Integration & Deployment](./guide-for-user/10-cicd.md)
 11. [Documentation](./guide-for-user/11-documentation.md)
     - [GitLab Pages](./guide-for-user/11-documentation.md#gitlab-pages)
 12. [Streamlit](./guide-for-user/12-streamlit.md)
-
-## Overview for Admin Guide
-
-> Coming soon...
 
 ## Directory Tree
 

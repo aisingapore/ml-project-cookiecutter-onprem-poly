@@ -51,10 +51,10 @@ $ source ~/.bashrc
         resources:
       requests:
         memory: "4Gi"
-        cpu: "2.5"
+        cpu: "2"
       limits:
         memory: "4Gi"
-        cpu: "2.5"
+        cpu: "2"
     ...
     ```
 

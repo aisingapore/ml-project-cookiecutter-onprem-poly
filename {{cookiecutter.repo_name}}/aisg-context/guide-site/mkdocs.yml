@@ -57,8 +57,6 @@ nav:
     - CI/CD: guide-for-user/10-cicd.md
     - Documentation: guide-for-user/11-documentation.md
     - Streamlit: guide-for-user/12-streamlit.md
-  - Admin Guide:
-    - Prerequisites: guide-for-admin/01-prerequisites.md
 
 # Plugins
 plugins:

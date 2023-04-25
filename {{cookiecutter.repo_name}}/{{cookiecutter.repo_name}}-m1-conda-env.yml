@@ -22,7 +22,6 @@ dependencies:
     - pyyaml==5.4.1
     - python-json-logger==2.0.2
     - polyaxon==1.11.3
-    - google-cloud-storage==1.43.0
     - hydra-core==1.1.1
     - hydra-optuna-sweeper==1.1.1
     - optuna==2.10.0

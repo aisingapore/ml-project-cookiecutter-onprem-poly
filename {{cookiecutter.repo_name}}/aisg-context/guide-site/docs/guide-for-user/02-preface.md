@@ -6,8 +6,7 @@ This repository provides an end-to-end template for AI
 Singapore's AI engineers to onboard their AI projects.
 Instructions for generating this template is detailed in the
 `cookiecutter` template's repository's
-[`README.md`](https://github.com/aisingapore/ml-project-cookiecutter-gcp/blob/master/README.md)
-.
+[`README.md`](https://github.com/aisingapore/ml-project-cookiecutter-onprem/blob/master/README.md).
 
 While this repository provides users with a set of boilerplates,
 here you are also presented with a linear guide on
@@ -50,57 +49,97 @@ For this guide, we will work towards building a predictive model that is
 able to conduct sentiment classification for movie reviews.
 The model is then to be deployed through a REST API and used for batch
 inferencing as well.
-The raw dataset to be used is obtainable through a GCS bucket;
+The raw dataset to be used is obtainable through a S3 bucket;
 instructions for downloading the data into your development environment
 are detailed under
 ["Data Storage & Versioning"](./06-data-storage-versioning.md),
 to be referred to later on.
 
-## Google Cloud Platform (GCP) Projects
+## On-Premise Resources
 
-Each project in AI Singapore that requires the usage of GCP resources
-would be provided with a
-[GCP project](https://cloud.google.com/docs/overview#projects). Such
-projects are accessible through the
-[GCP console](https://console.cloud.google.com/home) once you've logged
-into your AI Singapore Google account.
+In AI Singapore, we have the flexibility and capability to leverage on
+cloud resources (like GCP or Azure) and/or on-premise resources
+(located in our own data centre). While the usage of cloud platform
+services are usually collated within a single dashboard or project,
+the on-premise services/resources are presented in a more isolated
+manner, with different entry points. In the following sections, we will
+cover the different entry points and accounts needed to access the
+differing resources/services/components.
+
+### Azure (for LDAP)
+
+Upon onboarding, engineers under AI Singapore's Industry Innovation and
+Products pillar would have received credentials for their own Azure
+account. This account is used for LDAP authentication, providing users
+with access to the following services:
+
+- [Microsoft Azure Portal](http://portal.azure.com)
+- [AI Singapore's GitLab instance](https://gitlab.aisingapore.net)
+- [AI Singapore's Rancher dashboard](https://rancher.aisingapore.net)
+- [AI Singapore's Harbor registry](https://registry.aisingapore.net)
+
+### Miscellaneous Credentials
+
+- Polyaxon dashboard (exclusive to each project)
+- MLflow Tracking server (exclusive to each project)
+- ECS (S3) bucket (exclusive to each project)
 
 !!! info
     Projects are managed and
     provisioned by AI Singapore's Platforms team.
-    If you'd like to request for a
-    project to be created (or for any other enquiries as well), please
+    Should you require access to any of the aforementioned services and
+    you do not have the respective accounts, please
     contact `mlops@aisingapore.org`.
 
-### Authorisation
+In order to interact with the on-premise resources, we will need to
+configure the components for it. Unlike cloud services, this template
+interacts with each component separately to allow for flexibility.
 
-You can use GCP's [Cloud SDK](https://cloud.google.com/sdk) to interact
-with the varying GCP services.
-When you're using the SDK for the first time,
-you are to provide authorisation using a user or service account. In AI
-Singapore's context, unless your use case concerns some automation or
-CI/CD pipelines, you will probably be using your user account
-(i.e. Google accounts with AI Singapore domains such as
-`@aisingapore.org` or `@aiap.sg`).
-See [here](https://cloud.google.com/sdk/docs/authorizing) for more
-information on authorising your SDK.
+### Container Registry
 
-A simple command to authorise access:
+Using the Docker Engine CLI, one may pull or push images to container
+registries. However, to pull from or push to any registry other than
+[Docker Hub](https://hub.docker.com), we would need to authenticate
+first. In this case, one would need to authenticate the Docker CLI with
+AI Singapore's Harbor registry using the relevant Azure credentials:
 
 ```bash
-$ gcloud auth login
+$ docker login registry.aisingapore.net
 ```
 
-To register `gcloud` for Docker so you can push to
-Google Container Registry:
+### AWS CLI
+
+We will be using AWS CLI to access AI Singapore's on-premise
+object storage system:
+[ECS](https://www.dell.com/en-sg/dt/storage/ecs/index.htm#tab0=0&tab1=0).
+ECS uses the S3 protocol hence it is possible to utilise AWS' CLI for
+S3 operations.
+
+The AWS CLI offers multiple avenues to pass credentials for the CLI,
+ranging from setting environmental variables to populating specific
+files within the `~/.aws`  directory.
+
+For your personal machine, it will be more robust and secure to generate the
+credential file on your machine with the inbuilt `configure` function.
 
 ```bash
-$ gcloud auth configure-docker
+$ aws configure
 ```
 
-With your user account, you should have access to the following GCP
-products/services:
+!!! note
+	Within AI Singapore's context, leave the `Default region name` and
+    `Default output format` parameters empty.
 
-- [Kubernetes Engine (GKE)](https://cloud.google.com/kubernetes-engine)
-- [Cloud Storage (GCS)](https://cloud.google.com/storage)
-- [Container Registry (GCR)](https://cloud.google.com/container-registry)
+While we have configured these credentials, access to ECS
+using the AWS CLI requires an additional flag: `--endpoint-url`. Say
+you would like to list resources under your project's bucket, you would
+have to specify the command like so:
+
+```bash
+$ aws s3 ls s3://my-project-bucket --endpoint-url="https://necs.nus.edu.sg"
+```
+
+__Reference(s):__
+
+- [Okta - What is LDAP & how does it work?](https://www.okta.com/sg/identity-101/what-is-ldap)
+- [AWS Docs - Using the AWS CLI examples](https://docs.aws.amazon.com/cli/latest/userguide/welcome-examples.html)

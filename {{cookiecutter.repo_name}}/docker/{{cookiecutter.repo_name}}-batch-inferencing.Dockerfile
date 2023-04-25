@@ -14,14 +14,10 @@ ARG MINI_CONDA_SH="Miniconda3-py39_4.12.0-Linux-x86_64.sh"
 
 ARG PRED_MODEL_UUID
 RUN test -n "$PRED_MODEL_UUID"
-{% if cookiecutter.gcr_personal_subdir == 'No' %}
-ARG PRED_MODEL_GCS_URI="gs://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server/$PRED_MODEL_UUID"
-{% elif cookiecutter.gcr_personal_subdir == 'Yes' %}
-ARG PRED_MODEL_GCS_URI="gs://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server/{{cookiecutter.author_name}}/$PRED_MODEL_UUID"
-{% endif %}
-ARG PRED_MODEL_PATH="$HOME_DIR/from-gcs/$PRED_MODEL_UUID/artifacts/model/data/model"
+ARG PRED_MODEL_ECS_S3_URI="s3://{{cookiecutter.repo_name}}-artifacts/mlflow-tracking-server/$PRED_MODEL_UUID"
+ARG PRED_MODEL_PATH="$HOME_DIR/from-ecs/$PRED_MODEL_UUID/artifacts/model/data/model"
 ENV PRED_MODEL_UUID=$PRED_MODEL_UUID
-ENV PRED_MODEL_GCS_URI=$PRED_MODEL_GCS_URI
+ENV PRED_MODEL_ECS_S3_URI=$PRED_MODEL_ECS_S3_URI
 ENV PRED_MODEL_PATH=$PRED_MODEL_PATH
 
 WORKDIR $HOME_DIR
@@ -41,13 +37,13 @@ RUN apt-get update && \
     update-locale LANG=en_US.UTF-8 && \
     apt-get clean
 
-# From https://cloud.google.com/sdk/docs/install#installation_instructions
-RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && \
-    apt-get update -y && apt-get install google-cloud-sdk -y
+# Install AWS CLI v2
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && \
+    ./aws/install
 
 COPY $REPO_DIR {{cookiecutter.repo_name}}
-RUN mkdir $HOME_DIR/from-gcs
+RUN mkdir $HOME_DIR/from-ecs
 
 RUN mkdir $CONDA_HOME && chown -R 2222:2222 $CONDA_HOME
 RUN chown -R 2222:2222 $HOME_DIR && \

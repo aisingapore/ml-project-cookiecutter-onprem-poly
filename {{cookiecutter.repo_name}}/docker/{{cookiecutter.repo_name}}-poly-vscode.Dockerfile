@@ -2,9 +2,6 @@ FROM debian:11
 
 ARG NON_ROOT_USER="coder"
 ARG HOME_DIR="/home/$NON_ROOT_USER"
-# DVC arguments
-ARG DVC_VERSION="2.8.3"
-ARG DVC_BINARY_NAME="dvc_2.8.3_amd64.deb"
 # VSCode Server arguments
 ARG CODE_SERVER_VERSION="4.0.1"
 ARG CODE_SERVER_BINARY_NAME="code-server_4.0.1_amd64.deb"
@@ -32,10 +29,10 @@ RUN apt-get update \
     apt-transport-https ca-certificates gnupg && \
     rm -rf /var/lib/apt/lists/*
 
-# From https://cloud.google.com/sdk/docs/install#installation_instructions
-RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && \
-    apt-get update -y && apt-get install google-cloud-sdk -y
+# Install AWS CLI v2
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && \
+    ./aws/install
 
 RUN apt-get update && \
     apt-get install -y \
@@ -73,10 +70,6 @@ RUN chown -R 2222:2222 $CODE_SERVER_BINARY_NAME && \
     chmod +x /usr/bin/entrypoint.sh
 
 RUN dpkg -i $CODE_SERVER_BINARY_NAME && rm $CODE_SERVER_BINARY_NAME
-
-RUN wget "https://github.com/iterative/dvc/releases/download/$DVC_VERSION/$DVC_BINARY_NAME" && \
-    apt install -y "./$DVC_BINARY_NAME" && \
-    rm "./$DVC_BINARY_NAME"
 
 RUN mkdir $CONDA_HOME && chown -R 2222:2222 $CONDA_HOME
 RUN chown -R 2222:2222 $HOME_DIR
