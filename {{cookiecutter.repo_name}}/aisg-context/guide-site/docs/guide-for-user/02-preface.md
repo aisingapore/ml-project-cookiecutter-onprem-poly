@@ -6,7 +6,7 @@ This repository provides an end-to-end template for AI
 Singapore's AI engineers to onboard their AI projects.
 Instructions for generating this template is detailed in the
 `cookiecutter` template's repository's
-[`README.md`](https://github.com/aisingapore/ml-project-cookiecutter-onprem/blob/master/README.md).
+[`README.md`](https://github.com/aisingapore/ml-project-cookiecutter-onprem-poly/blob/master/README.md).
 
 While this repository provides users with a set of boilerplates,
 here you are also presented with a linear guide on
